@@ -1,0 +1,205 @@
+---
+- name: install required packages for install
+  package:
+    name: "{{ item }}" 
+    state: present
+    update_cache: yes
+  become: true
+  with_items:
+    - socat
+
+- name: create the worker plane configuration directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  become: true
+  with_items:
+    - "/etc/cni/net.d"
+    - "/opt/cni/bin"
+    - "/var/lib/kubelet"
+    - "/var/lib/kube-proxy"
+    - "/var/lib/kubernetes"
+    - "/var/run/kubernetes"
+
+- name: get the current CNI plugins version
+  command: cat /opt/cni/cni-plugins-version
+  register: cni_plugins_current_version
+  changed_when: false
+  failed_when: false
+
+- name: install the CNI plugins
+  unarchive:
+    remote_src: true
+    src: "{{ cni_plugins_url }}"
+    dest: "/opt/cni/bin/"
+    mode: 0755
+  become: true
+  when: >
+    (cni_plugins_current_version.stdout is not defined)
+    or (cni_plugins_current_version.stdout is defined and cni_plugins_version not in cni_plugins_current_version.stdout)
+
+- name: write the CNI plugins version to a file
+  shell: "echo {{ cni_plugins_version }} > /opt/cni/cni-plugins-version"
+  become: true
+  when: >
+    (cni_plugins_current_version.stdout is not defined)
+    or (cni_plugins_current_version.stdout is defined and cni_plugins_version not in cni_plugins_current_version.stdout)
+
+- name: get the current containerd CRI version
+  command: cat /opt/containerd-version
+  register: containerd_current_version
+  changed_when: false
+  failed_when: false
+
+- name: install the containerd CRI
+  unarchive:
+    remote_src: true
+    src: "{{ containerd_url }}"
+    dest: "/"
+  become: true
+  when: >
+    (containerd_current_version.stdout is not defined)
+    or (containerd_current_version.stdout is defined and containerd_version not in containerd_current_version.stdout)
+
+- name: write the containerd CRI version to a file
+  shell: "echo {{ containerd_version }} > /opt/containerd-version"
+  become: true
+  when: >
+    (containerd_current_version.stdout is not defined)
+    or (containerd_current_version.stdout is defined and containerd_version not in containerd_current_version.stdout)
+
+- name: check current kubernetes proxy version
+  command: kube-proxy --version
+  register: kubeproxy_current_version
+  changed_when: false
+  failed_when: false
+
+- name: check current kubectl version
+  command: kubectl version --client
+  register: kubectl_current_version
+  changed_when: false
+  failed_when: false
+
+- name: install the kubernetes client
+  get_url:
+    url: "{{ kubectl_url }}"
+    dest: "/usr/local/bin/"
+    mode: 0755
+  become: true
+  when: >
+    (kubectl_current_version.stdout is not defined)
+    or (kubectl_current_version.stdout is defined and k8s_version not in kubectl_current_version.stdout)
+
+- name: install the kubernetes proxy
+  get_url:
+    url: "{{ proxy_url }}"
+    dest: "/usr/local/bin/"
+    mode: 0755
+  become: true
+  when: >
+    (kubeproxy_current_version.stdout is not defined)
+    or (kubeproxy_current_version.stdout is defined and k8s_version not in kubeproxy_current_version.stdout)
+
+- name: check current kubelet
+  command: kubelet --version
+  register: kubelet_current_version
+  changed_when: false
+  failed_when: false
+
+- name: install the kubelet
+  get_url:
+    url: "{{ kubelet_url }}"
+    dest: "/usr/local/bin/"
+    mode: 0755
+  become: true
+  when: >
+    (kubelet_current_version.stdout is not defined)
+    or (kubelet_current_version.stdout is defined and k8s_version not in kubelet_current_version.stdout)
+
+- name: install the CNI bridge configuration
+  template:
+    src: "{{ templates_path }}/10-bridge.conf.j2"
+    dest: "/etc/cni/net.d/10-bridge.conf"
+  become: true
+
+- name: install the CNI loopback configuration
+  copy:
+    src: "{{ files_path }}/99-loopback.conf"
+    dest: "/etc/cni/net.d/99-loopback.conf"
+  become: true
+
+- name: install the kubelet systemd unit
+  template:
+    src: "{{ templates_path }}/kubelet.service.j2"
+    dest: "/etc/systemd/system/kubelet.service"
+  become: true
+  register: kubelet_systemd_unit
+
+- name: copy the kubernetes client certificates to the kubelet configuration directory
+  copy:
+    remote_src: true
+    src: "{{ item }}"
+    dest: "/var/lib/kubelet/"
+  become: true
+  with_items:
+    - "/root/client.pem"
+    - "/root/client-key.pem"
+
+- name: copy the kubernetes Certificate Authority Cert to the kubernetes configuration directory
+  copy:
+    remote_src: true
+    src: "/root/ca.pem"
+    dest: "/var/lib/kubernetes/"
+  become: true
+
+- name: copy the client kubeconfig to the kubelet configuration directory
+  copy:
+    remote_src: true
+    src: "/root/client.kubeconfig"
+    dest: "/var/lib/kubelet/kubeconfig"
+  become: true
+
+- name: copy the proxy kubeconfig to the proxy configuration directory
+  copy:
+    remote_src: true
+    src: "/root/kube-proxy.kubeconfig"
+    dest: "/var/lib/kube-proxy/kubeconfig"
+  become: true
+
+- name: install the kube-proxy systemd unit
+  template:
+    src: "{{ templates_path }}/kube-proxy.service.j2"
+    dest: "/etc/systemd/system/kube-proxy.service"
+  become: true
+  register: proxy_systemd_unit
+
+- name: enable and start the kubernetes worker services
+  systemd:
+    name: "{{ item }}"
+    state: started
+    daemon_reload: true
+    enabled: true
+  become: true
+  with_items:
+    - containerd
+    - cri-containerd
+    - kubelet
+    - kube-proxy
+
+- name: restart the kubelet systemd service if it was changed
+  systemd:
+    name: kubelet
+    state: restarted
+    daemon_reload: true
+    enabled: true
+  become: true
+  when: kubelet_systemd_unit.changed
+
+- name: restart the kube-proxy systemd service if it was changed
+  systemd:
+    name: kube-proxy
+    state: restarted
+    daemon_reload: true
+    enabled: true
+  become: true
+  when: proxy_systemd_unit.changed

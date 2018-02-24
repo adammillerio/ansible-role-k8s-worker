@@ -1,0 +1,43 @@
+# Version configuration
+cfssl_version: "1.2"
+k8s_version: "1.9.0"
+cni_plugins_version: "0.6.0"
+containerd_version: "1.0.0-beta.1"
+
+# PKI configuration
+pki_expiry: "8760h"
+pki_algorithm: "rsa"
+pki_key_size: 2048
+pki_country: "US"
+pki_locality: "Annandale"
+pki_state: "Virginia"
+
+# K8S configuration
+k8s_public_apiserver_host: "api-internal.k8s.example.com"
+k8s_internal_apiserver_host: "api-internal.k8s.example.com"
+k8s_cni_cluster_dns_host: "100.64.0.10"
+k8s_cni_cluster_dns_domain: "cluster.local"
+k8s_proxy_cluster_cidr: "10.1.1.0/24"
+
+# Directories
+files_path: "{{ role_path }}/files"
+templates_path: "{{ role_path }}/templates"
+
+# Paths
+cfssl_path: /usr/local/bin/cfssl
+cfssljson_path: /usr/local/bin/cfssljson
+
+# Derived variables
+# Paths
+certificate_authority_key_path: "{{ files_path }}/ca-key.pem"
+certificate_authority_cert_path: "{{ files_path }}/ca.pem"
+proxy_key_path: "{{ files_path }}/kube-proxy-key.pem"
+proxy_cert_path: "{{ files_path }}/kube-proxy.pem"
+encryption_config_path: "{{ files_path }}/encryption-config.yml"
+
+# URLs
+cni_plugins_url: "https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/cni-plugins-amd64-v{{ cni_plugins_version }}.tgz"
+containerd_url: "https://github.com/containerd/cri-containerd/releases/download/v{{ containerd_version }}/cri-containerd-{{ containerd_version }}.linux-amd64.tar.gz"
+kubectl_url: "https://storage.googleapis.com/kubernetes-release/release/v{{ k8s_version }}/bin/linux/amd64/kubectl"
+proxy_url: "https://storage.googleapis.com/kubernetes-release/release/v{{ k8s_version }}/bin/linux/amd64/kube-proxy"
+kubelet_url: "https://storage.googleapis.com/kubernetes-release/release/v{{ k8s_version }}/bin/linux/amd64/kubelet"

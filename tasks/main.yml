@@ -1,0 +1,8 @@
+---
+- import_tasks: cfssl.yml
+
+- import_tasks: pki.yml
+
+- import_tasks: kubeconfig.yml
+
+- import_tasks: k8s-worker-plane.yml
