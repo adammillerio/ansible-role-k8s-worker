@@ -45,6 +45,12 @@
     - "{{ certificate_authority_cert_path }}"
     - "{{ certificate_authority_key_path }}"
 
+- name: copy the Certificate Authority cert to the workers
+  copy:
+    src: "{{ certificate_authority_cert_path }}"
+    dest: "/root/ca.pem"
+  become: true
+
 - name: check if client certificate cert is already present
   local_action:
     module: stat
@@ -101,6 +107,7 @@
     dest: "/root/client.pem"
   become: true
   with_items: "{{ play_hosts }}"
+  when: "inventory_hostname == item"
 
 - name: copy the client key to the host
   copy:
@@ -108,6 +115,7 @@
     dest: "/root/client-key.pem"
   become: true
   with_items: "{{ play_hosts }}"
+  when: "inventory_hostname == item"
 
 - name: check if kube-proxy Key is already present
   local_action:
@@ -146,11 +154,14 @@
     - "{{ proxy_cert_path }}"
     - "{{ proxy_key_path }}"
 
-- name: copy Certificate Authority Cert and kube-proxy certs to the workers
+- name: copy the kube-proxy cert to the workers
   copy:
-    src: "{{ certificate_authority_cert_path }}"
-    dest: "/root/"
+    src: "{{ proxy_cert_path }}"
+    dest: "/root/kube-proxy.pem"
   become: true
-  with_items:
-    - "{{ proxy_cert_path }}"
-    - "{{ proxy_key_path }}"
+
+- name: copy the kube-proxy key to the workers
+  copy:
+    src: "{{ proxy_key_path }}"
+    dest: "/root/kube-proxy-key.pem"
+  become: true

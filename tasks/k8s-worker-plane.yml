@@ -135,6 +135,13 @@
   become: true
   register: kubelet_systemd_unit
 
+- name: copy the kubernetes Certificate Authority Cert to the kubernetes configuration directory
+  copy:
+    remote_src: true
+    src: "/root/ca.pem"
+    dest: "/var/lib/kubernetes/"
+  become: true
+
 - name: copy the kubernetes client certificates to the kubelet configuration directory
   copy:
     remote_src: true
@@ -145,24 +152,25 @@
     - "/root/client.pem"
     - "/root/client-key.pem"
 
-- name: copy the kubernetes Certificate Authority Cert to the kubernetes configuration directory
-  copy:
-    remote_src: true
-    src: "/root/ca.pem"
-    dest: "/var/lib/kubernetes/"
-  become: true
-
-- name: copy the client kubeconfig to the kubelet configuration directory
-  copy:
-    remote_src: true
-    src: "/root/client.kubeconfig"
+- name: template the client kubeconfig to the kubelet configuration directory
+  template:
+    src: "{{ templates_path }}/client.kubeconfig.j2"
     dest: "/var/lib/kubelet/kubeconfig"
   become: true
 
-- name: copy the proxy kubeconfig to the proxy configuration directory
+- name: copy the proxy certificates to the proxy configuration directory
   copy:
     remote_src: true
-    src: "/root/kube-proxy.kubeconfig"
+    src: "{{ item }}"
+    dest: "/var/lib/kube-proxy/"
+  become: true
+  with_items:
+    - "/root/kube-proxy.pem"
+    - "/root/kube-proxy-key.pem"
+
+- name: template the proxy kubeconfig to the proxy configuration directory
+  template:
+    src: "{{ templates_path }}/kube-proxy.kubeconfig.j2"
     dest: "/var/lib/kube-proxy/kubeconfig"
   become: true
 
