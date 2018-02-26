@@ -1,8 +1,8 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=cri-containerd.service
-Requires=cri-containerd.service
+After=docker.service
+Requires=docker.service
 
 [Service]
 ExecStart=/usr/local/bin/kubelet \
@@ -13,11 +13,11 @@ ExecStart=/usr/local/bin/kubelet \
   --cloud-provider= \
   --cluster-dns={{ k8s_cni_cluster_dns_host }} \
   --cluster-domain={{ k8s_cni_cluster_dns_domain }} \
-  --container-runtime=remote \
-  --container-runtime-endpoint=unix:///var/run/cri-containerd.sock \
+  --container-runtime=docker \
+  --docker=unix:///var/run/docker.sock \
   --image-pull-progress-deadline=2m \
   --kubeconfig=/var/lib/kubelet/kubeconfig \
-  --network-plugin=cni \
+  --network-plugin=kubenet \
   --register-node=true \
   --runtime-request-timeout=15m \
   --tls-cert-file=/var/lib/kubelet/client.pem \

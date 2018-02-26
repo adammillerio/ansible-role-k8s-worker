@@ -45,28 +45,73 @@
     (cni_plugins_current_version.stdout is not defined)
     or (cni_plugins_current_version.stdout is defined and cni_plugins_version not in cni_plugins_current_version.stdout)
 
-- name: get the current containerd CRI version
-  command: cat /opt/containerd-version
-  register: containerd_current_version
+- name: get the current docker version
+  command: docker version
+  register: docker_current_version
   changed_when: false
   failed_when: false
 
-- name: install the containerd CRI
+- name: download and extract docker
   unarchive:
     remote_src: true
-    src: "{{ containerd_url }}"
-    dest: "/"
-  become: true
+    src: "{{ docker_url }}"
+    dest: "/tmp/"
+    list_files: true
+  register: docker_tar_files
   when: >
-    (containerd_current_version.stdout is not defined)
-    or (containerd_current_version.stdout is defined and containerd_version not in containerd_current_version.stdout)
+    (docker_current_version.stdout is not defined)
+    or (docker_current_version.stdout is defined and docker_version not in docker_current_version.stdout)
 
-- name: write the containerd CRI version to a file
-  shell: "echo {{ containerd_version }} > /opt/containerd-version"
-  become: true
+- name: set the docker archive output directory fact
+  set_fact:
+    docker_tar_path: "{{ docker_tar_files.files[0] }}"
   when: >
-    (containerd_current_version.stdout is not defined)
-    or (containerd_current_version.stdout is defined and containerd_version not in containerd_current_version.stdout)
+    (docker_current_version.stdout is not defined)
+    or (docker_current_version.stdout is defined and docker_version not in docker_current_version.stdout)
+
+- name: install docker
+  copy:
+    remote_src: true
+    src: "{{ item }}"
+    dest: "/usr/local/bin/"
+    mode: 0755
+  become: true
+  with_items:
+    - "/tmp/{{ docker_tar_path }}docker"
+    - "/tmp/{{ docker_tar_path }}docker-containerd"
+    - "/tmp/{{ docker_tar_path }}docker-containerd-ctr"
+    - "/tmp/{{ docker_tar_path }}docker-containerd-shim"
+    - "/tmp/{{ docker_tar_path }}dockerd"
+    - "/tmp/{{ docker_tar_path }}docker-init"
+    - "/tmp/{{ docker_tar_path }}docker-proxy"
+    - "/tmp/{{ docker_tar_path }}docker-runc"
+  when: >
+    (docker_current_version.stdout is not defined)
+    or (docker_current_version.stdout is defined and docker_version not in docker_current_version.stdout)
+
+- name: install the docker systemd unit
+  copy:
+    src: "{{ files_path }}/docker.service"
+    dest: "/etc/systemd/system/"
+  become: yes
+  register: docker_systemd_unit
+
+- name: enable and start the docker service
+  systemd:
+    name: docker
+    state: started
+    daemon_reload: true
+    enabled: true
+  become: true
+
+- name: restart the docker systemd service if it was changed
+  systemd:
+    name: docker
+    state: restarted
+    daemon_reload: true
+    enabled: true
+  become: true
+  when: docker_systemd_unit.changed
 
 - name: check current kubernetes proxy version
   command: kube-proxy --version
@@ -115,18 +160,6 @@
   when: >
     (kubelet_current_version.stdout is not defined)
     or (kubelet_current_version.stdout is defined and k8s_version not in kubelet_current_version.stdout)
-
-- name: install the CNI bridge configuration
-  template:
-    src: "{{ templates_path }}/10-bridge.conf.j2"
-    dest: "/etc/cni/net.d/10-bridge.conf"
-  become: true
-
-- name: install the CNI loopback configuration
-  copy:
-    src: "{{ files_path }}/99-loopback.conf"
-    dest: "/etc/cni/net.d/99-loopback.conf"
-  become: true
 
 - name: install the kubelet systemd unit
   template:
@@ -189,8 +222,6 @@
     enabled: true
   become: true
   with_items:
-    - containerd
-    - cri-containerd
     - kubelet
     - kube-proxy
 

@@ -1,8 +1,9 @@
 # Version configuration
 cfssl_version: "1.2"
 k8s_version: "1.9.0"
+docker_version: "17.03.2"
+docker_edition: "ce"
 cni_plugins_version: "0.6.0"
-containerd_version: "1.0.0-beta.1"
 
 # PKI configuration
 pki_expiry: "8760h"
@@ -17,7 +18,6 @@ k8s_apiserver_public_host: "api.k8s.example.com"
 k8s_apiserver_internal_host: "api-internal.k8s.example.com"
 k8s_cni_cluster_dns_host: "100.64.0.10"
 k8s_cni_cluster_dns_domain: "cluster.local"
-k8s_proxy_cluster_cidr: "10.1.1.0/24"
 
 # Directories
 files_path: "{{ role_path }}/files"
@@ -38,8 +38,8 @@ encryption_config_path: "{{ files_path }}/encryption-config.yml"
 # URLs
 cfssl_url: "https://pkg.cfssl.org/R{{ cfssl_version }}/cfssl_linux-amd64"
 cfssljson_url: "https://pkg.cfssl.org/R{{ cfssl_version }}/cfssljson_linux-amd64"
+docker_url: "https://download.docker.com/linux/static/stable/x86_64/docker-{{ docker_version }}-{{ docker_edition }}.tgz"
 cni_plugins_url: "https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/cni-plugins-amd64-v{{ cni_plugins_version }}.tgz"
-containerd_url: "https://github.com/containerd/cri-containerd/releases/download/v{{ containerd_version }}/cri-containerd-{{ containerd_version }}.linux-amd64.tar.gz"
 kubectl_url: "https://storage.googleapis.com/kubernetes-release/release/v{{ k8s_version }}/bin/linux/amd64/kubectl"
 proxy_url: "https://storage.googleapis.com/kubernetes-release/release/v{{ k8s_version }}/bin/linux/amd64/kube-proxy"
 kubelet_url: "https://storage.googleapis.com/kubernetes-release/release/v{{ k8s_version }}/bin/linux/amd64/kubelet"
