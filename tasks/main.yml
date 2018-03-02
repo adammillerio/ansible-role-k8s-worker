@@ -1,6 +1,10 @@
 ---
+- import_tasks: dirs.yml
+
 - import_tasks: cfssl.yml
 
 - import_tasks: pki.yml
 
-- import_tasks: k8s-worker-plane.yml
+- import_tasks: docker.yml
+
+- import_tasks: k8s-base.yml

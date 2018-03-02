@@ -19,10 +19,15 @@ ExecStart=/usr/local/bin/kubelet \
   --kubeconfig=/var/lib/kubelet/kubeconfig \
   --network-plugin=kubenet \
   --register-node=true \
+  --register-schedulable=true \
   --runtime-request-timeout=15m \
   --tls-cert-file=/var/lib/kubelet/client.pem \
   --tls-private-key-file=/var/lib/kubelet/client-key.pem \
   --hostname-override={{ inventory_hostname }} \
+  --pod-manifest-path=/etc/kubernetes/manifests \
+  --eviction-hard=memory.available<100Mi,nodefs.available<10%,nodefs.inodesFree<5%,imagefs.available<10%,imagefs.inodesFree<5% \
+  --feature-gates=ExperimentalCriticalPodAnnotation=true \
+  --node-labels=kubernetes.io/role=node,node-role.kubernetes.io/node= \
   --v=2
 Restart=on-failure
 RestartSec=5

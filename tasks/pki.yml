@@ -51,11 +51,13 @@
     - "{{ certificate_authority_cert_path }}"
     - "{{ certificate_authority_key_path }}"
 
-- name: copy the Certificate Authority cert to the workers
+- name: copy the Certificate Authority cert to the kubernetes configuration directories
   copy:
     src: "{{ certificate_authority_cert_path }}"
-    dest: "/root/ca.pem"
+    dest: "{{ item }}"
   become: true
+  with_items:
+    - "/var/lib/kubernetes/"
 
 - name: check if client certificate cert is already present
   local_action:
@@ -116,7 +118,7 @@
 - name: copy the client certificate to the host
   copy:
     src: "{{ files_path }}/{{ item }}.pem"
-    dest: "/root/client.pem"
+    dest: "/var/lib/kubelet/client.pem"
   become: true
   with_items: "{{ play_hosts }}"
   when: "inventory_hostname == item"
@@ -124,7 +126,7 @@
 - name: copy the client key to the host
   copy:
     src: "{{ files_path }}/{{ item }}-key.pem"
-    dest: "/root/client-key.pem"
+    dest: "/var/lib/kubelet/client-key.pem"
   become: true
   with_items: "{{ play_hosts }}"
   when: "inventory_hostname == item"
@@ -171,14 +173,14 @@
     - "{{ proxy_cert_path }}"
     - "{{ proxy_key_path }}"
 
-- name: copy the kube-proxy cert to the workers
+- name: copy the kube-proxy cert to the kubernetes configuration directories
   copy:
     src: "{{ proxy_cert_path }}"
-    dest: "/root/kube-proxy.pem"
+    dest: "/var/lib/kube-proxy/kube-proxy.pem"
   become: true
 
-- name: copy the kube-proxy key to the workers
+- name: copy the kube-proxy key to the kubernetes configuration directories
   copy:
     src: "{{ proxy_key_path }}"
-    dest: "/root/kube-proxy-key.pem"
+    dest: "/var/lib/kube-proxy/kube-proxy-key.pem"
   become: true
