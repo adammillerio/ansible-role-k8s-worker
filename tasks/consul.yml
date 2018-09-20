@@ -1,0 +1,12 @@
+---
+- name: template the consul manifest
+  template:
+    src: "{{ templates_path }}/consul-worker.manifest.j2"
+    dest: "/etc/kubernetes/manifests/consul-worker.manifest"
+  become: yes
+
+- name: wait for consul to become available
+  wait_for:
+    host: localhost
+    port: 8500
+    timeout: 120

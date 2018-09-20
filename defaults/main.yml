@@ -1,9 +1,13 @@
 # Version configuration
 cfssl_version: "1.2"
+consul_version: "1.1.0"
 k8s_version: "1.9.0"
 docker_version: "17.03.2"
 docker_edition: "ce"
 cni_plugins_version: "0.6.0"
+
+# System configuration
+system_interface: "default"
 
 # PKI configuration
 pki_expiry: "8760h"
@@ -13,9 +17,13 @@ pki_country: "US"
 pki_locality: "Annandale"
 pki_state: "Virginia"
 
+# Consul configuration
+consul_enable: true
+consul_join_host: "master1.example.com"
+
 # K8S configuration
 k8s_apiserver_public_host: "api.k8s.example.com"
-k8s_apiserver_internal_host: "api-internal.k8s.example.com"
+k8s_apiserver_internal_host: "kubernetes.service.consul"
 k8s_cni_cluster_dns_host: "100.64.0.10"
 k8s_cni_cluster_dns_domain: "cluster.local"
 k8s_cni_cluster_cidr: "100.64.0.0/10"
