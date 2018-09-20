@@ -8,3 +8,6 @@
 - import_tasks: docker.yml
 
 - import_tasks: k8s-base.yml
+
+- import_tasks: consul.yml
+  when: consul_enable
