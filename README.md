@@ -43,11 +43,11 @@ The following variables are utilized within the role. Sensible defaults have bee
 | Name  | Default  | Description  |
 |---|---|---|
 | cfssl_version | 1.2 | Version of the CloudFlare PKI and TLS toolkit to install |
-| consul_version | 1.1.0 | Version of the Consul service discovery daemon to install |
-| k8s_version | 1.9.0 | Version of the Kubernetes components to install |
-| docker_version | 17.03.2 | Version of the Docker CRI to install |
+| consul_version | 1.2.3 | Version of the Consul service discovery daemon to install |
+| k8s_version | 1.11.3 | Version of the Kubernetes components to install |
+| docker_version | 18.06.1 | Version of the Docker CRI to install |
 | docker_edition | ce | Edition of the Docker CRI to install |
-| cni_plugins_version | 0.6.0 | Version of the CNI plugins to install |
+| cni_plugins_version | 0.7.1 | Version of the CNI plugins to install |
 
 ## System
 | Name  | Default  | Description  |
@@ -84,7 +84,7 @@ Other variables are defined in `defaults/main.yml` but should only be overriden 
 
 # Installation
 Before using this role, ensure the following are available/configured on the host:
-* ansible (Tested on 2.4.3.0)
+* ansible (Tested on 2.6.4)
 * CloudFlare SSL toolkit (Tested on 1.2)
 * User running the playbook has access to the `files` directory, as keys will be generated on the host and placed there
 
